@@ -1,0 +1,49 @@
+name: Sync MCP for Blender
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout marketplace
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout upstream Codex integration
+        uses: actions/checkout@v4
+        with:
+          repository: ahujasid/mcp-for-blender
+          ref: main
+          path: upstream
+          sparse-checkout: |
+            integrations/codex/.agents
+            integrations/codex/plugins
+          sparse-checkout-cone-mode: true
+
+      - name: Sync plugin files
+        run: |
+          rm -rf .agents/plugins plugins/mcp-for-blender
+          mkdir -p .agents/plugins plugins
+          cp upstream/integrations/codex/.agents/plugins/marketplace.json .agents/plugins/marketplace.json
+          cp -R upstream/integrations/codex/plugins/mcp-for-blender plugins/mcp-for-blender
+          rm -rf upstream
+
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .agents plugins
+          if git diff --cached --quiet; then
+            echo 'No upstream changes.'
+          else
+            git commit -m 'chore: sync mcp-for-blender'
+            git push
+          fi
