@@ -1,7 +1,7 @@
 {
-  "name": "cee-plugins",
+  "name": "mcp-for-blender",
   "interface": {
-    "displayName": "Cee Plugins"
+    "displayName": "MCP for Blender"
   },
   "plugins": [
     {
