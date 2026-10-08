@@ -30,11 +30,29 @@ jobs:
 
       - name: Sync plugin files
         run: |
-          rm -rf .agents/plugins plugins/mcp-for-blender
-          mkdir -p .agents/plugins plugins
-          cp upstream/integrations/codex/.agents/plugins/marketplace.json .agents/plugins/marketplace.json
+          rm -rf plugins/mcp-for-blender
+          mkdir -p plugins
           cp -R upstream/integrations/codex/plugins/mcp-for-blender plugins/mcp-for-blender
           rm -rf upstream
+
+      - name: Validate marketplace identity
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest_path = Path('.agents/plugins/marketplace.json')
+          manifest = json.loads(manifest_path.read_text())
+
+          if manifest.get('name') != 'cee-plugins':
+              raise SystemExit('marketplace name must remain cee-plugins')
+          if manifest.get('interface', {}).get('displayName') != 'Cee Plugins':
+              raise SystemExit('marketplace display name must remain Cee Plugins')
+
+          plugin_names = {plugin['name'] for plugin in manifest.get('plugins', [])}
+          if 'mcp-for-blender' not in plugin_names:
+              raise SystemExit('marketplace no longer contains mcp-for-blender')
+          PY
 
       - name: Commit changes
         run: |
