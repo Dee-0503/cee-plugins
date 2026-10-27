@@ -1,0 +1,50 @@
+name: Sync Ponytail
+
+on:
+  schedule:
+    - cron: '41 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout marketplace
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync upstream Ponytail
+        run: ./sync-ponytail.sh
+
+      - name: Validate synchronized plugin
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('plugins/ponytail')
+          for name in ('.codex-plugin/plugin.json', '.claude-plugin/plugin.json'):
+              json.loads((root / name).read_text())
+          if not (root / 'skills').is_dir(): raise SystemExit('skills directory missing')
+          if not (root / 'UPSTREAM_VERSION').read_text().strip(): raise SystemExit('upstream version metadata missing')
+          marketplace = json.loads(Path('.agents/plugins/marketplace.json').read_text())
+          if marketplace.get('name') != 'cee-plugins': raise SystemExit('marketplace identity changed')
+          if marketplace.get('interface', {}).get('displayName') != 'Cee Plugins': raise SystemExit('marketplace display name changed')
+          if not any(p.get('name') == 'ponytail' for p in marketplace.get('plugins', [])):
+              raise SystemExit('ponytail marketplace entry missing')
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .agents/plugins/marketplace.json plugins/ponytail
+          if git diff --cached --quiet; then
+            echo 'No upstream changes.'
+          else
+            git commit -m 'chore: sync ponytail'
+            git push
+          fi

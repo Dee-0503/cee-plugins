@@ -1,10 +1,8 @@
-# Cee Plugins Marketplace
+## Cee Plugins Marketplace
 
-Personal Codex plugin marketplace.
-
-## Included plugins
+This marketplace provides installable plugins for Codex and Claude Code.
 
 - `mcp-for-blender`: Codex integration for the community MCP for Blender project.
+- `ponytail`: upstream-synchronized Ponytail plugin from [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail).
 
-The plugin source is synchronized from `ahujasid/mcp-for-blender` under
-`integrations/codex/`.
+Ponytail's `skills/`, `hooks/`, platform manifests, and required assets are synchronized automatically by GitHub Actions. The synchronized plugin records its upstream commit and version in `plugins/ponytail/UPSTREAM_VERSION`.
